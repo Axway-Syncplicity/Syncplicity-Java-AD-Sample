@@ -1,0 +1,1 @@
+# Syncplicity-Java-AD-Sample
