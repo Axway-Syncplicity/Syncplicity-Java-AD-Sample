@@ -32,6 +32,10 @@ Update key values in java\com\syncplicity\api\samples\commonesources\config.prop
 * Update the consumer secret (REPLACE_WITH_APP_SECRET)
 * Update the Syncplicity admin token (REPLACE_WITH_ADMIN_TOKEN)
 * Update the EE account owner email, typically the sandbox owner email for development purposes (REPLACE_OWNER_EMAIL_OF_SANDBOX_EE_ACCOUNT)
+* Update the active directory url (adUrl) so that the sample app can locate the AD server
+* Update the active directory login id. This will be the user that the application uses to query the active directory (queryUserBaseDN)
+* Update the active directory password for the above user (queryUserPassword).
+* Update the active directory permission search level \[search base\]. (querySearchBase)
 Run the application.
 
 ## Contributing
@@ -45,4 +49,4 @@ See contribute.md file in the root directory if you want to submit an issue or a
 
 
 ## License
-Apache License 2.0 (refer to document [license] (/LICENSE))
+Apache License 2.0 (refer to document [license] )
