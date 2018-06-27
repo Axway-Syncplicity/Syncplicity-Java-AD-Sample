@@ -36,6 +36,7 @@ Update key values in java\com\syncplicity\api\samples\commonesources\config.prop
 * Update the active directory login id. This will be the user that the application uses to query the active directory (queryUserBaseDN)
 * Update the active directory password for the above user (queryUserPassword).
 * Update the active directory permission search level \[search base\]. (querySearchBase)
+
 Run the application.
 
 ## Contributing
@@ -49,4 +50,4 @@ See contribute.md file in the root directory if you want to submit an issue or a
 
 
 ## License
-Apache License 2.0 (refer to document [license] )
+Apache License 2.0
