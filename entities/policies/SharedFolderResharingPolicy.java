@@ -11,16 +11,16 @@ public enum SharedFolderResharingPolicy implements Serializable {
 	 */
 	Unknown(0),
 	/**
-	 * Disable folder resharing for external Users. Folders can only be reshared
+	 * Disable folder re-sharing for external Users. Folders can only be reshared
 	 * by folks in the same company.
 	 */
 	DisallowAll(1),
 	/**
-	 * Folders can only be reshared by external users who has Editor permissions
+	 * Folders can only be re-shared by external users who has Editor permissions
 	 */
 	ExternalEditorOnly(2),
 	/**
-	 * Allow resharing by anyone (Consumer behavior)
+	 * Allow re-sharing by anyone (Consumer behavior)
 	 */
 	AllowAll(3);
 
@@ -31,14 +31,14 @@ public enum SharedFolderResharingPolicy implements Serializable {
 		if (mappings == null) {
 			synchronized (SharedFolderResharingPolicy.class) {
 				if (mappings == null) {
-					mappings = new java.util.HashMap<Integer, SharedFolderResharingPolicy>();
+					mappings = new java.util.HashMap<>();
 				}
 			}
 		}
 		return mappings;
 	}
 
-	private SharedFolderResharingPolicy(int value) {
+	SharedFolderResharingPolicy(int value) {
 		intValue = value;
 		getMappings().put(value, this);
 	}

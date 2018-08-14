@@ -4,7 +4,6 @@ import util.APIContext;
 import util.APIGateway;
 import util.ConfigurationHelper;
 
-
 public class OAuth
 	extends APIGateway {
 
@@ -18,10 +17,10 @@ public class OAuth
 		APIContext.setOAuthResponse(tokenResponse);
 	}
 	
-	//This call will invalidate the current oauth 
-	//and any refresh-tokens along with removing
-	//the grant of access to the application to 
-	//the given user account.   
+	/**
+	 * This call will invalidate the current oauth and any refresh-tokens along with removing
+	 * the grant of access to the application to the given user account.
+	 */
 	public static void revokeToken() {
 		
 		String revokeUrl = ConfigurationHelper.getOAuthRevokeTokenUrl();
@@ -30,7 +29,7 @@ public class OAuth
 		
 		APIContext.setOAuthResponse(tokenResponse);
 	}
-	
+
 	public static void refreshToken() {
 		
 		//Note: technically refreshToken() which uses grant_type=client_credentials is the same

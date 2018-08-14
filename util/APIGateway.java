@@ -24,7 +24,7 @@ public abstract class APIGateway {
 	private final static String ACCEPT_HEADER = "Accept";
 	private final static String JSON_CONTENT_TYPE = "application/json";
 
-	protected static String provisioningAPIUrlPrefix = "";
+	protected static String provisioningAPIUrlPrefix;
 
 	static {
 		provisioningAPIUrlPrefix = ConfigurationHelper.getBaseApiEndpointUrl() + "provisioning/";
@@ -37,8 +37,6 @@ public abstract class APIGateway {
 	 * @param uri The url of request.
 	 * 
 	 * @return Created request.
-	 * 
-	 * @throws IOException
 	 */
 	private static HttpURLConnection createRequest(String method, String uri, boolean isAuthenticationCall )
 			throws IOException {
@@ -54,7 +52,7 @@ public abstract class APIGateway {
 		request.setDoOutput(true);
 		request.setDoInput(true);
 
-		return applyCosumerCredentials(request, isAuthenticationCall );
+		return applyConsumerCredentials(request, isAuthenticationCall );
 	}
 
 	/**
@@ -62,8 +60,6 @@ public abstract class APIGateway {
 	 * 
 	 * @param request The request object.
 	 * @param body The string representation of body.
-	 * 
-	 * @throws IOException
 	 */
 	private static void writeBody(HttpURLConnection request, String body, String contentType)
 			throws IOException {
@@ -81,14 +77,11 @@ public abstract class APIGateway {
 		
 		System.out.println( "[Body] " + body);
 
-		try {
-			OutputStream requestStream = request.getOutputStream();
-			
-			requestStream.write(body.getBytes(Charset.forName("UTF-8")));
-			requestStream.flush();
-			requestStream.close();
-		}
-		finally { }
+		OutputStream requestStream = request.getOutputStream();
+
+		requestStream.write(body.getBytes(Charset.forName("UTF-8")));
+		requestStream.flush();
+		requestStream.close();
 	}
 
 	/**
@@ -98,7 +91,7 @@ public abstract class APIGateway {
 	 * 
 	 * @return The current request.
 	 */
-	private static HttpURLConnection applyCosumerCredentials( HttpURLConnection request, boolean isAuthenticationCall ) {
+	private static HttpURLConnection applyConsumerCredentials(HttpURLConnection request, boolean isAuthenticationCall ) {
 
 		//If this is the first OAuth authentication call, then we don't have an OAuth Bearer token (access token), so we will use the
 		//Application Key and Application Secret as the consumer credentials for the application.  However, once we've successfully
@@ -147,31 +140,16 @@ public abstract class APIGateway {
 				shouldRefreshToken.setResult(false);
 			}
 			
-			System.out.println("");
+			System.out.println();
 			System.out.println("Trying to read response...");
-			
-			try {
-				InputStream responseStream = request.getInputStream();
-				
+
+			try (InputStream responseStream = request.getInputStream()) {
 				if (responseStream == null) {
 					System.out.println("Response wasn't received.");
 					return null;
 				}
 
-				String response = null;
-				try {
-					BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
-					
-					String line;
-					StringBuffer responseBuffer = new StringBuffer();
-					while ((line = reader.readLine()) != null) {
-						responseBuffer.append(line);
-						responseBuffer.append('\r');
-					}
-					reader.close();
-					response = responseBuffer.toString();
-				}
-				finally { }
+				String response = ReadStreamAsString(responseStream);
 
 				if( StringUtils.isEmpty(response) || StringUtils.isWhitespace(response) ) {
 					System.out.println("Received response is empty.");
@@ -185,27 +163,37 @@ public abstract class APIGateway {
 				JsonElement je = jp.parse(response);
 				String prettyJsonString = gson.toJson(je);
 				prettyJsonString = prettyJsonString.replaceAll( " ", "  " );
-				
+
 				System.out.println( "Response: \n" + prettyJsonString );
-				
+
 				if (!classType.isAssignableFrom(String.class)) {
-					return JSONSerialization.deserizalize(response, classType);
+					return JSONSerialization.deserialize(response, classType);
 				}
 
 				return (T) response;
 			}
-			finally {}
-			
 		} 
 		catch (IOException e) {
 			
 			if( !suppressErrors ) {
-				System.err.println( "" );
+				System.err.println();
 				System.err.println(String.format("\tError occurs during request to %s.", request.getURL().toString()));
 				
 				try {
 					System.err.println(String.format("\tReceived: %d %s.", request.getResponseCode(), request.getResponseMessage()));
-				} catch (IOException e1) { }
+					String errorMessage;
+					try (InputStream errorStream = request.getErrorStream()){
+						if(errorStream != null) {
+							errorMessage = ReadStreamAsString(errorStream);
+						} else {
+							errorMessage = null;
+						}
+					}
+
+					System.err.printf("\t\t%s\n", errorMessage);
+				} catch (IOException e1) {
+					// Do NOT reproduce empty catch blocks in production code. Exceptions must be either rethrown, or handled.
+				}
 				
 				e.printStackTrace();
 			}
@@ -214,14 +202,33 @@ public abstract class APIGateway {
 				// it's needed to authorize again and then send the same request again
                 if ( shouldRefreshToken != null &&
                     (request.getResponseCode() == 401 ||
-                    (request.getResponseCode() == 403 && request.getResponseMessage() == "Forbidden")) )
+                    (request.getResponseCode() == 403 && "Forbidden".equals(request.getResponseMessage()))) )
                 {
                     shouldRefreshToken.setResult(true);
                 }
-			} catch (IOException e1) { }
+			} catch (IOException e1) {
+				// Do NOT reproduce empty catch blocks in production code. Exceptions must be either rethrown, or handled.
+			}
 		}
 
 		return null;
+	}
+
+	private static String ReadStreamAsString(InputStream errorStream) throws IOException {
+		String errorMessage;
+		try (InputStreamReader reader = new InputStreamReader(errorStream)) {
+			try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+				StringBuilder errorMessageBuilder = new StringBuilder();
+				String line;
+				while ((line = bufferedReader.readLine()) != null) {
+					errorMessageBuilder.append(line);
+					errorMessageBuilder.append("\n");
+				}
+
+				errorMessage = errorMessageBuilder.toString();
+			}
+		}
+		return errorMessage;
 	}
 
 
@@ -266,7 +273,7 @@ public abstract class APIGateway {
 
         if (shouldRefreshToken.getResult())
         {
-        	System.out.println("");
+        	System.out.println();
         	System.out.println("Trying to re-authenticate using the same credentials.");
 
             // it's needed to authorize again
@@ -324,7 +331,7 @@ public abstract class APIGateway {
         
         if (!isAuthenticationCall && shouldRefreshToken.getResult())
         {
-        	System.out.println("");
+        	System.out.println();
         	System.out.println("Trying to re-authenticate using the same credentials.");
 
             // it's needed to authorize again
@@ -341,7 +348,7 @@ public abstract class APIGateway {
             System.out.println("Authentication was successful. Trying to send POST request again for the last time.");
             
             try {
-            	request = createRequest(method, uri, isAuthenticationCall );
+            	request = createRequest(method, uri, false);
     			request.setRequestProperty("Content-Type", contentType );
 
     			writeBody(request, body, contentType);
@@ -369,7 +376,7 @@ public abstract class APIGateway {
 	@SuppressWarnings("unchecked")
 	protected static <T> T httpPost(String uri, String contentType, T entity ) {
 		
-		return httpPost(false, uri, contentType, JSONSerialization.serizalize(entity), (Class<T>) entity.getClass());
+		return httpPost(false, uri, contentType, JSONSerialization.serialize(entity), (Class<T>) entity.getClass());
 	}
 
 	/**
@@ -402,7 +409,7 @@ public abstract class APIGateway {
         
         if (shouldRefreshToken.getResult())
         {
-        	System.out.println("");
+        	System.out.println();
         	System.out.println("Trying to re-authenticate using the same credentials.");
 
             // it's needed to authorize again
@@ -448,7 +455,7 @@ public abstract class APIGateway {
 	@SuppressWarnings("unchecked")
 	protected static <T> T httpPut(String uri, T entity) {
 		
-		return httpPut(uri, JSONSerialization.serizalize(entity), (Class<T>) entity.getClass());
+		return httpPut(uri, JSONSerialization.serialize(entity), (Class<T>) entity.getClass());
 	}
 
 	/**
@@ -456,7 +463,6 @@ public abstract class APIGateway {
 	 * object of type classType.
 	 * 
 	 * @param uri The request url.
-	 * @param body The request body.
 	 * @param classType The type of returned object.
 	 * 
 	 * @return The object representation of received response or null if
@@ -477,7 +483,7 @@ public abstract class APIGateway {
         
         if (shouldRefreshToken.getResult())
         {
-        	System.out.println("");
+        	System.out.println();
         	System.out.println("Trying to re-authenticate using the same credentials.");
 
             // it's needed to authorize again

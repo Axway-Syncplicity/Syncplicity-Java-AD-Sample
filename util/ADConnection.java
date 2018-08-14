@@ -2,7 +2,6 @@ package util;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
@@ -14,31 +13,38 @@ import java.util.Hashtable;
  */
 public class ADConnection {
 
-    public static NamingEnumeration<SearchResult> getADContextObjects(String[] returnAtts, String searchPattern) throws NamingException {
+    /**
+     * Performs search in an Active Directory
+     * @param returningAttributes Specifies the attributes that will be returned as part of the search.
+     * null indicates that all attributes will be returned. An empty array indicates no attributes are returned.
+     * @param searchPattern the filter expression to use for the search; may not be null
+     * @return an enumeration of <tt>SearchResult</tt>s for the objects that satisfy the filter.
+     */
+    public static NamingEnumeration<SearchResult> getADContextObjects(String[] returningAttributes, String searchPattern) {
         DirContext ldapContext;
         NamingEnumeration<SearchResult> objects = null;
         try {
-            Hashtable<String, String> ldapEnvAtts = new Hashtable<String, String>();
-            ldapEnvAtts.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-            ldapEnvAtts.put(Context.PROVIDER_URL, ConfigurationHelper.getADUrl());
-            ldapEnvAtts.put(Context.SECURITY_AUTHENTICATION, "simple");
-            ldapEnvAtts.put(Context.SECURITY_PRINCIPAL, ConfigurationHelper.getADQueryUserBaseDN());
-            ldapEnvAtts.put(Context.SECURITY_CREDENTIALS, ConfigurationHelper.getADQueryUserPassword());
-            ldapContext = new InitialDirContext(ldapEnvAtts);
+            Hashtable<String, String> ldapEnvironmentAttributes = new Hashtable<>();
+            ldapEnvironmentAttributes.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+            ldapEnvironmentAttributes.put(Context.PROVIDER_URL, ConfigurationHelper.getADUrl());
+            ldapEnvironmentAttributes.put(Context.SECURITY_AUTHENTICATION, "simple");
+            ldapEnvironmentAttributes.put(Context.SECURITY_PRINCIPAL, ConfigurationHelper.getADQueryUserBaseDN());
+            ldapEnvironmentAttributes.put(Context.SECURITY_CREDENTIALS, ConfigurationHelper.getADQueryUserPassword());
+            ldapContext = new InitialDirContext(ldapEnvironmentAttributes);
 
-            SearchControls searchCtrls = new SearchControls();
+            SearchControls searchControls = new SearchControls();
 
-            searchCtrls.setReturningAttributes(returnAtts);
+            searchControls.setReturningAttributes(returningAttributes);
 
-            searchCtrls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
             String searchBase = ConfigurationHelper.getADQuerySearchBase();
 
-            objects = ldapContext.search(searchBase, searchPattern, searchCtrls);
+            objects = ldapContext.search(searchBase, searchPattern, searchControls);
 
             ldapContext.close();
         } catch (Exception e) {
-            System.out.println("LDAP connection error: " + e);
+            System.out.printf("LDAP connection error: %s%n", e);
             e.printStackTrace();
             System.exit(-1);
         }
