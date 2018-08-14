@@ -27,8 +27,6 @@ public class JSONDateTypeAdapter extends TypeAdapter<Date> {
 		try {
 			long milis = Long.parseLong(date);
 			return new Date(milis);
-		} catch (NumberFormatException e) {
-			return null;
 		} catch (Exception e) {
 			return null;
 		}

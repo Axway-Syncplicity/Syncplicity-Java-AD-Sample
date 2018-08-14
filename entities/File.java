@@ -6,7 +6,7 @@ import java.io.Serializable;
 public class File implements Serializable {
 	public int SyncpointId;
 
-	public int FileId;
+	public String FileId;
 
 	public String VirtualPath;
 
@@ -24,7 +24,7 @@ public class File implements Serializable {
 
 	public FileStatus Status = FileStatus.values()[0];
 
-	public int LatestVersionId;
+	public String LatestVersionId;
 
 	public FileVersion[] Versions;
 
@@ -32,16 +32,13 @@ public class File implements Serializable {
 
 	public String ThumbnailUrl;
 
-	public int FolderId;
+	public String FolderId;
 
 	/** 
      Returns a logging-friendly string
-
-     @return 
-     A <see cref="System.String"/>
-
 	 */
 	public final String ToLoggingString() {
-		return String.format("Virtual Path: %1$s, Filename: %2$s, Status: %3$s, VirtualFolderId: %4$s, LatestVersionId: %5$s", VirtualPath, Filename, Status.toString(), SyncpointId, LatestVersionId);
+		return String.format("Virtual Path: %1$s, Filename: %2$s, Status: %3$s, VirtualFolderId: %4$s, LatestVersionId: %5$s",
+				VirtualPath, Filename, Status.toString(), SyncpointId, LatestVersionId);
 	}
 }

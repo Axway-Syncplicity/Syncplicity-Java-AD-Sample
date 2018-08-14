@@ -485,7 +485,28 @@ public class TokenResponse {
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(issuedAt).append(scope).append(applicationName).append(refreshTokenIssuedAt).append(status).append(userCompanyId).append(refreshTokenStatus).append(apiProductList).append(expiresIn).append(userEmail).append(organizationId).append(tokenType).append(refreshToken).append(clientId).append(accessToken).append(organizationName).append(refreshTokenExpiresIn).append(refreshCount).toHashCode();
+        return new HashCodeBuilder()
+
+                .append(issuedAt)
+                .append(scope)
+                .append(applicationName)
+                .append(refreshTokenIssuedAt)
+                .append(status)
+                .append(userCompanyId)
+                .append(refreshTokenStatus)
+                .append(apiProductList)
+                .append(expiresIn)
+                .append(userEmail)
+                .append(organizationId)
+                .append(tokenType)
+                .append(refreshToken)
+                .append(clientId)
+                .append(accessToken)
+                .append(organizationName)
+                .append(refreshTokenExpiresIn)
+                .append(refreshCount)
+
+                .toHashCode();
     }
 
     @Override
@@ -497,7 +518,29 @@ public class TokenResponse {
             return false;
         }
         TokenResponse rhs = ((TokenResponse) other);
-        return new EqualsBuilder().append(issuedAt, rhs.issuedAt).append(scope, rhs.scope).append(applicationName, rhs.applicationName).append(refreshTokenIssuedAt, rhs.refreshTokenIssuedAt).append(status, rhs.status).append(userCompanyId, rhs.userCompanyId).append(refreshTokenStatus, rhs.refreshTokenStatus).append(apiProductList, rhs.apiProductList).append(expiresIn, rhs.expiresIn).append(userEmail, rhs.userEmail).append(organizationId, rhs.organizationId).append(tokenType, rhs.tokenType).append(refreshToken, rhs.refreshToken).append(clientId, rhs.clientId).append(accessToken, rhs.accessToken).append(organizationName, rhs.organizationName).append(refreshTokenExpiresIn, rhs.refreshTokenExpiresIn).append(refreshCount, rhs.refreshCount).isEquals();
+
+        return new EqualsBuilder()
+
+                .append(issuedAt, rhs.issuedAt)
+                .append(scope, rhs.scope)
+                .append(applicationName, rhs.applicationName)
+                .append(refreshTokenIssuedAt, rhs.refreshTokenIssuedAt)
+                .append(status, rhs.status)
+                .append(userCompanyId, rhs.userCompanyId)
+                .append(refreshTokenStatus, rhs.refreshTokenStatus)
+                .append(apiProductList, rhs.apiProductList)
+                .append(expiresIn, rhs.expiresIn)
+                .append(userEmail, rhs.userEmail)
+                .append(organizationId, rhs.organizationId)
+                .append(tokenType, rhs.tokenType)
+                .append(refreshToken, rhs.refreshToken)
+                .append(clientId, rhs.clientId)
+                .append(accessToken, rhs.accessToken)
+                .append(organizationName, rhs.organizationName)
+                .append(refreshTokenExpiresIn, rhs.refreshTokenExpiresIn)
+                .append(refreshCount, rhs.refreshCount)
+
+                .isEquals();
     }
 
 }

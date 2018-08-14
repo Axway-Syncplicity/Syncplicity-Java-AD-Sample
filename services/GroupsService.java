@@ -3,6 +3,7 @@ package services;
 import util.APIGateway;
 import entities.Group;
 
+import java.util.UUID;
 
 /**
  * Class for requests to group.svc and groups.svc
@@ -47,7 +48,7 @@ public class GroupsService
 	 * 
 	 * @param groupGuid Group Guid.
 	 */
-	public static void deleteGroup(String groupGuid) {
+	public static void deleteGroup(UUID groupGuid) {
 		httpDelete(String.format(groupUrl, groupGuid), Group.class);
 	}
 

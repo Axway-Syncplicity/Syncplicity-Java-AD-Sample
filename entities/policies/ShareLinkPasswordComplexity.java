@@ -6,13 +6,12 @@ import java.io.Serializable;
  * Password complexity options
  */
 public enum ShareLinkPasswordComplexity implements Serializable {
-	// <summary>
 	/**
 	 * Default value
 	 */
 	Unknown(0),
 	/**
-	 * Password need to be of configirable length and can contain anything
+	 * Password need to be of configurable length and can contain anything
 	 */
 	Default(1),
 	/**
@@ -27,14 +26,14 @@ public enum ShareLinkPasswordComplexity implements Serializable {
 		if (mappings == null) {
 			synchronized (ShareLinkPasswordComplexity.class) {
 				if (mappings == null) {
-					mappings = new java.util.HashMap<Integer, ShareLinkPasswordComplexity>();
+					mappings = new java.util.HashMap<>();
 				}
 			}
 		}
 		return mappings;
 	}
 
-	private ShareLinkPasswordComplexity(int value) {
+	ShareLinkPasswordComplexity(int value) {
 		intValue = value;
 		getMappings().put(value, this);
 	}

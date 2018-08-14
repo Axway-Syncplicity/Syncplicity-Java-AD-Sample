@@ -7,15 +7,19 @@ import org.apache.commons.lang.StringUtils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-/*
+/**
+ * <p>
  * For this sample code we are using google's open source JSON serialize/deserialize 
  * library.  Any method of serializing/deserializing of the JSON request/response
  * can be used in your own application.
- * 
+ * </p>
+ *
+ * <p>
  * NOTE: this is not a complete instantiation of all the data types that may need to 
  *       be serialized/deserialized when interacting with other Syncplicity APIs,
  *       this example covers what is needed for the few APIs invoked in 
  *       this application.
+ * </p>
  */
 public class JSONSerialization {
 	
@@ -26,7 +30,7 @@ public class JSONSerialization {
 	 * 
 	 * @return JSON string which represents object.
 	 */
-	public static <T> String serizalize(T entity) {
+	public static <T> String serialize(T entity) {
 		
 		if (entity != null) {
 			Gson gson = new GsonBuilder()
@@ -45,11 +49,11 @@ public class JSONSerialization {
 	 * De-serialize the input JSON string into the object.
 	 * 
 	 * @param serialized The input JSON string.
-	 * @param type  The type of object.
+	 * @param classType  The type of object.
 	 * 
 	 * @return The instance of object of type Class<T>.
 	 */
-	public static <T> T deserizalize(String serialized, Class<T> classType) {
+	public static <T> T deserialize(String serialized, Class<T> classType) {
 		
 		if( !StringUtils.isEmpty(serialized) && !StringUtils.isWhitespace(serialized) ) {
 			

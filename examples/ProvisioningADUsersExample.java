@@ -12,27 +12,32 @@ import util.ConfigurationHelper;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchResult;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.UUID;
 
 public class ProvisioningADUsersExample {
 
     private static User[] createdUsers;
     private static Group[] createdGroups;
 
-    /*
-     * ProvisioningADUsersExample
-     * - Retrieve the users in an OU from AD and create them in Syncplicity.
-     * - Retrieve the groups in an OU from AD and create them in Syncplicity.
-     * - Retrieve the user's groups from AD and map the Users on Syncplicity accordingly.
-     * - Remove the users from their respective groups on Syncplicity.
-     * - Delete the groups from Syncplicity.
-     * - Delete the users from Syncplicity.
-   */
-    public static void execute() throws NamingException {
+    /**
+     * Executes an example of provisioning users from an Organizational Unit of AD into Syncplicity.
+     * Includes steps:
+     * <OL>
+     *   <LI>Retrieve the users in an OU from AD and create them in Syncplicity.</LI>
+     *   <LI>Retrieve the groups in an OU from AD and create them in Syncplicity.</LI>
+     *   <LI>Retrieve the user's groups from AD and map the Users on Syncplicity accordingly.</LI>
+     *   <LI>Remove the users from their respective groups on Syncplicity.</LI>
+     *   <LI>Delete the groups from Syncplicity.</LI>
+     *   <LI>Delete the users from Syncplicity.</LI>
+     * </OL>
+     */
+    public static void execute() throws NamingException, IOException {
 
         createUsers(); //Retrieve the users in an OU from AD and create them in Syncplicity.
         createGroup(); //Retrieve the groups in an OU from AD and create them in Syncplicity.
@@ -42,7 +47,7 @@ public class ProvisioningADUsersExample {
         deleteUsers(); //Delete the users from Syncplicity.
     }
 
-    private static void deleteGroup() {
+    private static void deleteGroup() throws IOException {
 
         if (createdGroups == null || createdGroups.length == 0) {
             return;
@@ -53,24 +58,24 @@ public class ProvisioningADUsersExample {
 
         for (Group group : createdGroups) {
 
-            System.out.println("");
+            System.out.println();
             System.out.println(String.format("\tDelete Group [%s].", group.Name));
 
             GroupsService.deleteGroup(group.Id);
         }
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Finished Groups Deletion.");
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
     }
 
-    private static void addUserToGroups() throws NamingException {
+    private static void addUserToGroups() throws NamingException, IOException {
 
         if (createdUsers == null || createdUsers.length == 0 || createdGroups == null) {
             return;
         }
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Start Adding Users to respective Groups...");
         User[] user1 = new User[1];
         user1[0] = null;
@@ -80,7 +85,7 @@ public class ProvisioningADUsersExample {
             //get user groups from AD
             ArrayList<String> userADGroups = ADUtils.getADUsersGroups(user.EmailAddress);
             for (String groupName : userADGroups) {
-                String groupId = getGroupGUID(groupName);
+                UUID groupId = getGroupGUID(groupName);
                 System.out.println(String.format("Adding user[%s] to group [%s].", user.EmailAddress, groupName));
                 GroupMembersService.addGroupMembers(
                         groupId,
@@ -92,23 +97,23 @@ public class ProvisioningADUsersExample {
         }
 
         System.out.println("Finish Adding Users to respective Groups.");
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
     }
 
-    private static void deleteUserFromGroups() throws NamingException {
+    private static void deleteUserFromGroups() throws NamingException, IOException {
 
         if (createdUsers == null || createdUsers.length == 0 || createdGroups == null) {
             return;
         }
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Start Removing Users from Groups...");
 
         for (User user : createdUsers) {
             //get user groups from AD
             ArrayList<String> userADGroups = ADUtils.getADUsersGroups(user.EmailAddress);
             for (String groupName : userADGroups) {
-                String groupId = getGroupGUID(groupName);
+                UUID groupId = getGroupGUID(groupName);
                 System.out.println(String.format("Removing user[%s] from group [%s].", user.EmailAddress, groupName));
                 GroupMembersService.deleteGroupMember(
                         groupId,
@@ -119,12 +124,12 @@ public class ProvisioningADUsersExample {
         }
 
         System.out.println("Finish Removing Users from respective Groups.");
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
     }
 
-    private static void createGroup() throws NamingException {
+    private static void createGroup() throws NamingException, IOException {
 
-        System.out.println("");
+        System.out.println();
 
         String companyGuid = APIContext.getCompanyGuid();
         if (companyGuid == null || companyGuid.isEmpty()) {
@@ -133,47 +138,48 @@ public class ProvisioningADUsersExample {
         }
 
         NamingEnumeration<SearchResult> adGroups = ADUtils.getADGroups();
-        List<Group> groupsToAdd = new ArrayList<Group>();
+        List<Group> groupsToAdd = new ArrayList<>();
 
         int totalGroups = 0;
         while (adGroups.hasMoreElements()) {
             SearchResult sr;
             totalGroups++;
-            sr = (SearchResult) adGroups.next();
-            System.out.println(sr.getName().substring(sr.getName().indexOf("=") + 1).trim());
+            sr = adGroups.next();
+            String groupName = (String)sr.getAttributes().get("cn").get();
+            System.out.println(groupName);
             System.out.println("Start Group Creation...");
 
             Group group = new Group();
-            group.Name = sr.getName().substring(sr.getName().indexOf("=") + 1).trim();
+            group.Name = groupName;
             group.Owner = new User();
             group.Owner.EmailAddress = ConfigurationHelper.getOwnerEmail();
 
             groupsToAdd.add(group);
         }
-        createdGroups = GroupsService.createGroups(companyGuid, groupsToAdd.toArray(new Group[groupsToAdd.size()]));
+        createdGroups = GroupsService.createGroups(companyGuid, groupsToAdd.toArray(new Group[0]));
 
-        System.out.println("");
+        System.out.println();
 
         if (createdGroups == null || createdGroups.length == 0) {
-            System.err.println("Error Occured During Creating Group.");
+            System.err.println("Error Occurred During Creating Group.");
             return;
         }
 
         for (Group createdGroup : createdGroups)
             System.out.println(String.format("Finished Group Creation. New Group: %s", createdGroup.Name));
 
-        System.out.println("Total number of Groups: " + totalGroups);
+        System.out.printf("Total number of Groups: %d%n", totalGroups);
         System.out.println("Finish Groups Creation.");
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
 
     }
 
-    private static void createUsers() throws NamingException {
+    private static void createUsers() throws NamingException, IOException {
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Start Users Creation...");
 
-        List<User> usersToAdd = new ArrayList<User>();
+        List<User> usersToAdd = new ArrayList<>();
 
         NamingEnumeration<SearchResult> users = ADUtils.getADUsers();
 
@@ -181,25 +187,31 @@ public class ProvisioningADUsersExample {
         while (users.hasMoreElements()) {
             SearchResult sr;
             totalUsers++;
-            sr = (SearchResult) users.next();
+            sr = users.next();
             System.out.println(">>>" + sr.getName());
             Attributes attrs = sr.getAttributes();
 
 
             User user = new User();
             user.AccountType = UserAccountType.LimitedBusiness;
-            user.EmailAddress = attrs.get("mail").toString().substring(attrs.get("mail").toString().indexOf(":") + 1).trim();
+            Attribute mailAttribute = attrs.get("mail");
+            if(mailAttribute == null) continue;
+
+            user.EmailAddress = (String) mailAttribute.get();
             user.Password = ConfigurationHelper.getSimplePassword();
-            user.FirstName = attrs.get("givenName").toString().substring(attrs.get("givenName").toString().indexOf(":") + 1).trim();
-            user.LastName = attrs.get("sn").toString().substring(attrs.get("sn").toString().indexOf(":") + 1).trim();
+            
+            String fullName = (String)attrs.get("cn").get();
+            String[] fullNameParts = fullName.split(" ");
+            user.FirstName = fullNameParts[0];
+            user.LastName = fullNameParts[fullNameParts.length - 1];
 
             usersToAdd.add(user);
-            System.out.println("");
+            System.out.println();
             System.out.println(String.format("\tChecking if user [%s] already exists.", user.EmailAddress));
             //Checking if we've created this user already, if so, we'll delete it, and then recreate it again (below).
             User checkUser = UsersService.getUser(user.EmailAddress, true);
 
-            System.out.println("");
+            System.out.println();
 
             if (checkUser != null) {
                 //If this is the second time running, we'll need to clean up (delete) previous run's users
@@ -214,32 +226,32 @@ public class ProvisioningADUsersExample {
                 System.out.println("\tNo user found in company, continuing successfully.");
             }
         }
-        System.out.println("Total number of Users: " + totalUsers);
+        System.out.printf("Total number of Users: %d%n", totalUsers);
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Calling UsersService to add users");
-        createdUsers = UsersService.createUsers(usersToAdd.toArray(new User[usersToAdd.size()]));
+        createdUsers = UsersService.createUsers(usersToAdd.toArray(new User[0]));
 
-        System.err.println("");
+        System.err.println();
         if (createdUsers == null || createdUsers.length == 0) {
 
             int addedCount = (createdUsers == null ? 0 : createdUsers.length);
 
-            System.err.println(String.format("\tError Occured During Creating Some Of Users. Number of Created Users:%d", addedCount));
+            System.err.println(String.format("\tError Occurred During Creating Some Of Users. Number of Created Users:%d", addedCount));
         } else {
             System.out.println("\tFinished Users Creation.");
         }
 
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
     }
 
-    private static void deleteUsers() {
+    private static void deleteUsers() throws IOException {
 
         if (createdUsers == null || createdUsers.length == 0) {
             return;
         }
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Press enter before Users Deletion...");
 
         // remove created users
@@ -247,15 +259,15 @@ public class ProvisioningADUsersExample {
 
         for (User user : createdUsers) {
 
-            System.out.println("");
+            System.out.println();
             System.out.println(String.format("\tDelete User [%s].", user.EmailAddress));
 
             UsersService.deleteUser(user.EmailAddress);
         }
 
-        System.out.println("");
+        System.out.println();
         System.out.println("Finished Users Deletion.");
-        ADUtils.proceedToEnter();  //Just pauses the program until you hit 'enter'
+        ADUtils.proceedToEnter();
     }
 
     /**
@@ -265,18 +277,17 @@ public class ProvisioningADUsersExample {
      *
      * @return String ID of the group.
      */
-    private static String getGroupGUID(String groupName) {
-        String retGroupID = null;
+    private static UUID getGroupGUID(String groupName) {
         String companyGUID = APIContext.getCompanyGuid();
-        Group[] companyGroups= GroupsService.getCompanyGroups(companyGUID);
+        Group[] companyGroups = GroupsService.getCompanyGroups(companyGUID);
 
         for (Group group : companyGroups) {
             if (group.Name.equalsIgnoreCase(groupName)) {
-                retGroupID = group.Id;
-                break;
+                return group.Id;
             }
         }
-        return retGroupID;
+
+        return null;
     }
 
 }
