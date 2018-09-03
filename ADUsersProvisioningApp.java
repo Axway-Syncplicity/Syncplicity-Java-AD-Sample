@@ -2,7 +2,6 @@ import examples.ProvisioningADUsersExample;
 import oauth.OAuth;
 import util.APIContext;
 
-import javax.naming.NamingException;
 import javax.net.ssl.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -72,6 +71,7 @@ public class ADUsersProvisioningApp {
 		System.out.println("Sample ActiveDirectory user provisioning app has completed execution.");
 	}
 
+	@SuppressWarnings("unused") // Keep the code for the ability to disable SSL validation for running through Fiddler
 	private static void unsafeDisableSslVerification() {
 		try {
 			// Create a trust manager that does not validate certificate chains

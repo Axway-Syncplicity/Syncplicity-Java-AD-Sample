@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Base64;
 
 import oauth.OAuth;
 
@@ -17,7 +18,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 public abstract class APIGateway {
 	
@@ -98,22 +98,28 @@ public abstract class APIGateway {
 		//connected to the api gateway for the first time, we will receive an OAuth access token (Bearer token), you will
 		//need to manage that bearer token and use it for subsequent calls to the API gateway.
 
+		final String appKey = ConfigurationHelper.getApplicationKey();
 		if( isAuthenticationCall ) {
 			
-			String encoded = Base64.encode( (ConfigurationHelper.getApplicationKey() + ":" + ConfigurationHelper.getApplicationSecret()).getBytes() );
+			final String appSecret = ConfigurationHelper.getApplicationSecret();
+			final String basicAuthToken = appKey + ":" + appSecret;
+			String encoded = Base64.getEncoder().encodeToString(basicAuthToken.getBytes());
 			
 			System.out.println( "[Header] Authorization: Basic " + encoded + "\n" 
 			                   + "\t\t(Base64 encoded combination of App key and App secret)\n" 
-			                   + "\t\t" + ConfigurationHelper.getApplicationKey() + ":" + ConfigurationHelper.getApplicationSecret());
+			                   + "\t\t" + basicAuthToken);
 			System.out.println( "[Header] Sync-App-Token: " + ConfigurationHelper.getSyncplicityAdminKey() );
 			request.addRequestProperty("Authorization", "Basic " + encoded);
 			request.setRequestProperty("Sync-App-Token", ConfigurationHelper.getSyncplicityAdminKey()  );
 		}
 		else {
-			System.out.println( "[Header] AppKey: " +  ConfigurationHelper.getApplicationKey() );
-			System.out.println( "[Header] Authorization: Bearer " +  APIContext.getAccessToken() );
-			request.setRequestProperty("AppKey", ConfigurationHelper.getApplicationKey());
-			request.setRequestProperty("Authorization", "Bearer " + APIContext.getAccessToken() );
+			final String accessToken = APIContext.getAccessToken();
+			
+			System.out.println( "[Header] AppKey: " +  appKey );
+			request.setRequestProperty("AppKey", appKey);
+			
+			System.out.println( "[Header] Authorization: Bearer " +  accessToken );
+			request.setRequestProperty("Authorization", "Bearer " + accessToken );
 		}
 
 		return request;
