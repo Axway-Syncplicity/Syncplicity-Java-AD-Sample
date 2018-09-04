@@ -76,13 +76,12 @@ This sample application demonstrates usage of Syncplicity APIs. This is what you
     * Update the consumer secret (`<App Secret>`)
     * Update the Syncplicity admin token (`<Admin Token>`)
     * Update the EE account owner email, typically the sandbox owner email for development purposes (`<Owner Email>`)
-5. Determine the settings of the target Active Directory (LDAP) server in `resources\config.properties`.
-    For simplicity, we have configured the sample to use a public test LDAP server.
-    To use another server, specify:
-    * Active directory url (`adUrl`)
+5. Determine the settings of the target Active Directory (LDAP) server in `resources\config.properties`:
+    * Active directory server url (`adUrl`)
     * Active directory login DN. This will be the user that the application uses to query the active directory (`queryUserBaseDN`).
-        Note: this is not the account name, you need to get the Distinguished Name (DN) of the user.
+        **Note**: this is not the account name, you need to get the Distinguished Name (DN) of the user.
     * Active directory password for the above user (`queryUserPassword`).
+        **Note**: the sample supports direct authentication on the active directory server. SSO-type authentication might not work.
     * Active directory subtree to specify where to search for users and groups (`querySearchBase`).
 6. Configure the IDE to run as an application and use the `ADUsersProvisioningApp` class on launch.
 7. Build and Run the application.
